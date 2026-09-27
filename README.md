@@ -57,3 +57,43 @@ From the repo root there are shortcuts: `npm run install:all`, `npm run migrate`
 | `PORT`              | `4000`                                                   | HTTP port |
 | `CORS_ORIGIN`       | `http://localhost:3000`                                  | Comma-separated allowed browser origins |
 | `PUBLISHER_ENABLED` | `true`                                                   | Set `false` to switch off the every-minute publisher job on an instance |
+
+### `frontend/.env.local`
+
+| Variable                 | Default                     | Purpose |
+| ------------------------ | --------------------------- | ------- |
+| `NEXT_PUBLIC_API_URL`    | `http://localhost:4000/api` | REST base URL |
+| `NEXT_PUBLIC_SOCKET_URL` | `http://localhost:4000`     | Socket.IO endpoint |
+
+---
+
+## 3. Tests
+
+```bash
+cd backend
+npm test          # unit tests: status workflow, scheduling conflict rule, caption limits (88 tests)
+npm run test:e2e  # end-to-end tests against a real database (13 tests)
+```
+
+The e2e suite refuses to run unless `DATABASE_URL` contains `test`, because it wipes the database:
+
+```bash
+createdb campaignhub_test
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/campaignhub_test npm run test:e2e
+```
+
+Unit tests live in `backend/test/*.spec.ts`; the pure rule modules they cover are `src/posts/workflow.ts`, `src/posts/scheduling.ts` and `src/common/caption-limits.ts`.
+
+---
+
+## 4. Seed data & login credentials
+
+`npm run seed` (or the `seed` compose service) wipes the database and creates 1 admin, 2 creators, 2 reviewers, 3 clients and 18 posts (3 in every status), each with a realistic audit trail and comments. The login page also has one-click buttons for these accounts.
+
+| Role     | Name         | Email                            | Password       |
+| -------- | ------------ | -------------------------------- | -------------- |
+| ADMIN    | Anita Rao    | `admin@campaignhub.dev`          | `Admin@123`    |
+| CREATOR  | Priya Sharma | `priya.creator@campaignhub.dev`  | `Creator@123`  |
+| CREATOR  | Arjun Mehta  | `arjun.creator@campaignhub.dev`  | `Creator@123`  |
+| REVIEWER | Kavya Iyer   | `kavya.reviewer@campaignhub.dev` | `Reviewer@123` |
+| REVIEWER | Rohan Das    | `rohan.reviewer@campaignhub.dev` | `Reviewer@123` |
