@@ -1,0 +1,137 @@
+// CampaignHub database schema.
+//   npx prisma migrate dev --name <change>   create a migration after editing this file
+//   npx prisma migrate deploy                apply pending migrations (prod / CI / Docker)
+// Table and column names are snake_case in PostgreSQL and camelCase in TypeScript.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CREATOR
+  REVIEWER
+
+  @@map("user_role")
+}
+
+enum Platform {
+  INSTAGRAM
+  FACEBOOK
+  LINKEDIN
+  X
+
+  @@map("post_platform")
+}
+
+enum PostStatus {
+  DRAFT
+  IN_REVIEW
+  CHANGES_REQUESTED
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+
+  @@map("post_status")
+}
+
+model User {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String
+  email        String   @unique
+  /// bcrypt hash - omitted from every query unless explicitly asked for (see PrismaService).
+  passwordHash String   @map("password_hash")
+  role         Role
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  reviewerOf ClientReviewer[]
+  posts      Post[]
+  comments   Comment[]
+  auditLogs  AuditLog[]
+
+  @@map("users")
+}
+
+model Client {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  brandName String   @unique @map("brand_name")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  reviewers ClientReviewer[]
+  posts     Post[]
+
+  @@map("clients")
+}
+
+/// Which REVIEWER users may review a client's posts.
+model ClientReviewer {
+  clientId   String @map("client_id") @db.Uuid
+  reviewerId String @map("reviewer_id") @db.Uuid
+
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  reviewer User   @relation(fields: [reviewerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([clientId, reviewerId])
+  @@index([reviewerId])
+  @@map("client_reviewers")
+}
+
+model Post {
+  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clientId    String     @map("client_id") @db.Uuid
+  platform    Platform
+  caption     String
+  /// Always stored in UTC (timestamptz). Displayed in IST by the frontend.
+  scheduledAt DateTime?  @map("scheduled_at") @db.Timestamptz(6)
+  status      PostStatus @default(DRAFT)
+  createdById String     @map("created_by_id") @db.Uuid
+  /// Optimistic-locking counter. Incremented by every write; callers must send the value they read.
+  version     Int        @default(1)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  client    Client     @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  createdBy User       @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  comments  Comment[]
+  auditLogs AuditLog[]
+
+  @@index([clientId, platform, scheduledAt], map: "idx_posts_client_platform_scheduled")
+  @@index([status, scheduledAt], map: "idx_posts_status_scheduled")
+  @@map("posts")
+}
+
+model Comment {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  authorId  String   @map("author_id") @db.Uuid
+  message   String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([postId, createdAt], map: "idx_comments_post")
+  @@map("comments")
+}
+
+model AuditLog {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  postId     String      @map("post_id") @db.Uuid
+  /// Null when the change was made by the system (the publisher job).
+  actorId    String?     @map("actor_id") @db.Uuid
+  /// Null for the creation entry (nothing -> DRAFT).
+  fromStatus PostStatus? @map("from_status")
+  toStatus   PostStatus  @map("to_status")
+  timestamp  DateTime    @default(now()) @db.Timestamptz(6)
+
+  post  Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([postId, timestamp], map: "idx_audit_logs_post")
+  @@map("audit_logs")
+}
