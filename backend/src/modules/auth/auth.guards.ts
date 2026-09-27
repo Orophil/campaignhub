@@ -2,7 +2,7 @@ import { ExecutionContext, ForbiddenException, Injectable, CanActivate } from '@
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { Role } from '../../common/enums';
-import { AuthUser, IS_PUBLIC_KEY, ROLES_KEY } from './decorators';
+import { AuthUser, IS_PUBLIC_KEY, ROLES_KEY } from './auth.decorators';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
