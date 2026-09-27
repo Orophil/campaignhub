@@ -213,13 +213,13 @@ function UsersPanel({ users, onChange }: { users: User[]; onChange: () => void }
           <tbody>
             {users.map((u) => (
               <tr key={u.id}>
-                <td>
+                <td data-label="Name">
                   <span className="inline">
                     <Avatar name={u.name} size={22} /> {u.name}
                   </span>
                 </td>
-                <td className="muted">{u.email}</td>
-                <td>
+                <td className="muted" data-label="Email">{u.email}</td>
+                <td data-label="Role">
                   <span className={`role-pill role-${u.role}`}>{u.role.toLowerCase()}</span>
                 </td>
               </tr>

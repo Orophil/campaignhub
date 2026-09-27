@@ -767,13 +767,34 @@ textarea[aria-invalid='true'] {
 }
 
 /* ---------- kanban */
+.board-wrap {
+  position: relative;
+}
+.board-wrap::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 12px;
+  width: 40px;
+  background: linear-gradient(to right, transparent, var(--bg));
+  border-radius: 0 var(--radius) var(--radius) 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.board-wrap.can-scroll-right::after {
+  opacity: 1;
+}
 .board {
   display: grid;
-  grid-template-columns: repeat(6, minmax(215px, 1fr));
+  grid-template-columns: repeat(6, minmax(200px, 1fr));
   gap: 12px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   padding-bottom: 12px;
   scroll-snap-type: x proximity;
+  scroll-padding: 16px;
 }
 .column {
   background: var(--surface-2);
