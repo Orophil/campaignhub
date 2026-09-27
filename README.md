@@ -5,7 +5,7 @@ A full-stack app for media agencies that create social posts for several client 
 | Layer    | Stack                                                                 |
 | -------- | --------------------------------------------------------------------- |
 | Backend  | NestJS 11 · TypeScript · Prisma 6 · PostgreSQL 16 · JWT + bcrypt · Socket.IO · Swagger |
-| Frontend | Next.js 15 (App Router) · React 19 · TypeScript · socket.io-client · plain CSS |
+| Frontend | Next.js 16.3.6 (App Router) · React 19 · TypeScript · socket.io-client · plain CSS |
 | Tests    | Jest (unit) · Jest + Supertest against a real Postgres (e2e)          |
 | Infra    | Docker Compose (db + api + seed + web)                                 |
 
@@ -40,3 +40,20 @@ npm install                     # also runs `prisma generate`
 npm run migrate:deploy          # creates the schema (prisma migrate deploy)
 npm run seed                    # loads demo users / clients / posts
 npm run start:dev               # API on http://localhost:4000/api
+
+From the repo root there are shortcuts: `npm run install:all`, `npm run migrate`, `npm run seed`, `npm run dev:api`, `npm run dev:web`, `npm test`, `npm run test:e2e`.
+
+---
+
+## 2. Environment variables
+
+### `backend/.env`
+
+| Variable            | Default                                                  | Purpose |
+| ------------------- | -------------------------------------------------------- | ------- |
+| `DATABASE_URL`      | `postgres://postgres:postgres@localhost:5432/campaignhub` | PostgreSQL connection string |
+| `JWT_SECRET`        | *(required)*                                             | Secret used to sign access tokens |
+| `JWT_EXPIRES_IN`    | `8h`                                                     | Token lifetime |
+| `PORT`              | `4000`                                                   | HTTP port |
+| `CORS_ORIGIN`       | `http://localhost:3000`                                  | Comma-separated allowed browser origins |
+| `PUBLISHER_ENABLED` | `true`                                                   | Set `false` to switch off the every-minute publisher job on an instance |
